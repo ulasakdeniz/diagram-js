@@ -7,7 +7,9 @@ var canvasEvent = require('../../../util/MockEvents').createCanvasEvent;
 var pick = require('lodash/object/pick');
 
 var attachSupportModule = require('../../../../lib/features/attach-support'),
+    labelSupportModule = require('../../../../lib/features/label-support'),
     modelingModule = require('../../../../lib/features/modeling'),
+    moveModule = require('../../../../lib/features/move'),
     replaceModule = require('../../../../lib/features/replace'),
     rulesModule = require('./rules');
 
@@ -16,7 +18,16 @@ var getNewAttachShapeDelta = require('../../../../lib/util/AttachUtil').getNewAt
 
 describe('features/attach-support', function() {
 
-  beforeEach(bootstrapDiagram({ modules: [ attachSupportModule, modelingModule, rulesModule, replaceModule ] }));
+  beforeEach(bootstrapDiagram({
+    modules: [
+      attachSupportModule,
+      labelSupportModule,
+      moveModule,
+      modelingModule,
+      replaceModule,
+      rulesModule
+    ]
+  }));
 
 
   beforeEach(inject(function(dragging) {
@@ -173,7 +184,8 @@ describe('features/attach-support', function() {
     // up to someone else to care about
   });
 
-  describe('moving', function () {
+
+  describe('move', function () {
 
     var host, host2, attacher, attacher2;
 
@@ -797,6 +809,7 @@ describe('features/attach-support', function() {
 
   });
 
+
   describe('replace', function() {
 
     var host, attacher;
@@ -987,6 +1000,7 @@ describe('features/attach-support', function() {
         gfx: hostGfx
       });
 
+      debugger;
       dragging.move(canvasEvent({ x: 575, y: 75 }));
 
       var ctx = dragging.context();
@@ -1426,6 +1440,7 @@ describe('features/attach-support', function() {
 
   });
 
+
   describe('attachers', function() {
 
     var rootShape, host, attacher;
@@ -1538,6 +1553,6 @@ describe('features/attach-support', function() {
       });
     }));
 
-});
+  });
 
 });
