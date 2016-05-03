@@ -36,7 +36,7 @@ describe('i18n - translate', function() {
 
 
     it('should handle missing replacement', inject(function(translate) {
-      expect(translate('FOO {bar}!', {})).to.eql('FOO {bar}!');
+      expect(translate('FOO {bar} {baz}!', { baz: 'BAZ' })).to.eql('FOO {bar} BAZ!');
     }));
 
   });
