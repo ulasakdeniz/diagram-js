@@ -12,7 +12,9 @@ describe('features/Replace', function() {
 
   beforeEach(bootstrapDiagram({ modules: [ modelingModule, replaceModule ] }));
 
-  var rootShape, parentShape, originalShape;
+  var rootShape, parentShape, originalShape,
+      collapsedShape, hiddenContainedChild, hiddenOverlappingChild, hiddenOutOfBoundsChild,
+      expandedShape, containedChild;
 
   beforeEach(inject(function(elementFactory, canvas) {
 
@@ -35,6 +37,54 @@ describe('features/Replace', function() {
     });
 
     canvas.addShape(originalShape, parentShape);
+
+    collapsedShape = elementFactory.createShape({
+      id: 'collapsedShape',
+      x: 500, y: 100, width: 300, height: 300,
+      collapsed: true
+    });
+
+    canvas.addShape(collapsedShape, rootShape);
+
+    hiddenContainedChild = elementFactory.createShape({
+      id: 'hiddenContainedChild',
+      x: 650, y: 110, width: 100, height: 100,
+      hidden: true
+    });
+
+    canvas.addShape(hiddenContainedChild, collapsedShape);
+
+    hiddenOverlappingChild = elementFactory.createShape({
+      id: 'hiddenOverlappingChild',
+      x: 450, y: 50, width: 100, height: 100,
+      hidden: true
+    });
+
+    canvas.addShape(hiddenOverlappingChild, collapsedShape);
+
+    hiddenOutOfBoundsChild = elementFactory.createShape({
+      id: 'hiddenOutOfBoundsChild',
+      x: 825, y: 425, width: 100, height: 100,
+      hidden: true
+    });
+
+    canvas.addShape(hiddenOutOfBoundsChild, collapsedShape);
+
+    expandedShape = elementFactory.createShape({
+      id: 'expandedShape',
+      x: 100, y: 500, width: 300, height: 300,
+      collapsed: false
+    });
+
+    canvas.addShape(expandedShape, rootShape);
+
+    containedChild = elementFactory.createShape({
+      id: 'containedChild',
+      x: 110, y: 510, width: 100, height: 100
+    });
+
+    canvas.addShape(containedChild, expandedShape);
+
   }));
 
 
@@ -323,6 +373,124 @@ describe('features/Replace', function() {
 
       // when
       replace.replaceElement(parentShape, replacement);
+    }));
+
+
+    it('replacing collapsed with expanded should show children', inject(function(replace, eventBus) {
+
+      // given
+      var replacement = {
+        id: 'expanded',
+        width: 300,
+        height: 300,
+        collapsed: false
+      };
+
+      // when
+      var expanded = replace.replaceElement(collapsedShape, replacement);
+
+      // then
+      var children = expanded.children;
+      expect(children.length).to.eql(3);
+      children.forEach(function(child) {
+        expect(child.hidden).to.eql(false);
+      });
+
+    }));
+
+
+    it('replacing expanded with collapsed should hide children', inject(function(replace, eventBus) {
+
+      var replacement = {
+        id: 'collapsed',
+        width: 300,
+        height: 300,
+        collapsed: true
+      };
+
+      // when
+      var collapsed = replace.replaceElement(expandedShape, replacement);
+
+      // then
+      var children = collapsed.children;
+      expect(children.length).to.eql(1);
+      children.forEach(function(child) {
+        expect(child.hidden).to.eql(true);
+      });
+
+    }));
+
+
+    it('undo replacement of collapsed with expanded should hide children', inject(function(replace, eventBus, commandStack, elementRegistry) {
+
+      // given
+      var replacement = {
+        id: 'expanded',
+        width: 300,
+        height: 300,
+        collapsed: false
+      };
+
+      replace.replaceElement(collapsedShape, replacement);
+
+      // when
+      commandStack.undo();
+
+      // then
+      var collapsed = elementRegistry.get('collapsedShape');
+      var children = collapsed.children;
+      expect(children.length).to.eql(3);
+      children.forEach(function(child) {
+        expect(child.hidden).to.eql(true);
+      });
+
+    }));
+
+
+    it('undo replacement of expanded with collapsed should show children', inject(function(replace, eventBus, commandStack, elementRegistry) {
+
+      // given
+      var replacement = {
+        id: 'collapsed',
+        width: 300,
+        height: 300,
+        collapsed: true
+      };
+
+      replace.replaceElement(expandedShape, replacement);
+
+      // when
+      commandStack.undo();
+
+      // then
+      var expanded = elementRegistry.get('expandedShape');
+      var children = expanded.children;
+      expect(children.length).to.eql(1);
+      children.forEach(function(child) {
+        expect(child.hidden).to.eql(false);
+      });
+
+    }));
+
+
+    it('hidden children out of bounds should be covered when unvailed', inject(function(replace, eventBus) {
+
+      // given
+      var replacement = {
+        id: 'expanded',
+        width: 300,
+        height: 300,
+        collapsed: false
+      };
+
+      // when
+      var expandedShape = replace.replaceElement(collapsedShape, replacement);
+
+      // then
+      var child = expandedShape.children[1];
+      expect(child.hidden).to.eql(false);
+      expect(expandedShape.x).to.be.lessThan(child.x);
+      expect(expandedShape.y).to.be.lessThan(child.y);
     }));
 
   });
